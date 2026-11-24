@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>S3 Sync</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 40rem; margin: 3rem auto; padding: 0 1rem; }
+    a.download { display: inline-block; padding: .6rem 1rem; background: #2563eb; color: #fff; border-radius: .4rem; text-decoration: none; }
+    a.download.disabled { background: #9ca3af; pointer-events: none; cursor: not-allowed; }
+    #dl-note { color: #666; margin-left: .5rem; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
+    dt { color: #666; }
+    .success { color: #15803d; } .failure { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>S3 Sync</h1>
+  <p>
+    <a id="dl" class="download disabled" href="/archive.tar.gz" download aria-disabled="true">Download archive.tar.gz</a>
+    <span id="dl-note">Waiting for the first successful sync…</span>
+  </p>
+  <h2>Last sync</h2>
+  <dl id="status"><dt>Status</dt><dd>loading…</dd></dl>
+  <p><a href="/status.json">status.json</a></p>
+  <script>
+    // Enable the download button only once the archive actually exists.
+    function checkArchive() {
+      fetch('/archive.tar.gz', { method: 'HEAD', cache: 'no-store' })
+        .then(r => {
+          const ok = r.ok;
+          const dl = document.getElementById('dl');
+          dl.classList.toggle('disabled', !ok);
+          dl.setAttribute('aria-disabled', String(!ok));
+          document.getElementById('dl-note').textContent =
+            ok ? '' : 'Waiting for the first successful sync…';
+          if (!ok) setTimeout(checkArchive, 5000);
+        })
+        .catch(() => setTimeout(checkArchive, 5000));
+    }
+    checkArchive();
+
+    fetch('/status.json', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(s => {
+        const rows = [
+          ['Result', s.result ? `<span class="${s.result}">${s.result}</span>` : 'unknown'],
+          ['Last run', s.last_run || '-'],
+          ['Source', s.source || '-'],
+          ['Size', s.size_bytes != null ? (s.size_bytes / 1048576).toFixed(2) + ' MB' : '-'],
+          ['Files', s.file_count ?? '-'],
+        ];
+        document.getElementById('status').innerHTML =
+          rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+      })
+      .catch(() => { document.getElementById('status').innerHTML = '<dt>Status</dt><dd>unavailable</dd>'; });
+  </script>
+</body>
+</html>
