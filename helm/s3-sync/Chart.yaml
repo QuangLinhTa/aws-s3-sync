@@ -1,0 +1,6 @@
+apiVersion: v2
+name: s3-sync
+description: Syncs an S3 prefix, compresses it, and serves the archive via Nginx
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

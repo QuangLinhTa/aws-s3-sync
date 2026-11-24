@@ -1,0 +1,39 @@
+replicaCount: 3
+
+image:
+  repository: s3-sync
+  tag: local
+  pullPolicy: IfNotPresent
+
+# S3 source configuration (passed to the container as env vars)
+s3:
+  bucket: ""          # required
+  prefix: ""
+  region: us-east-1
+  syncInterval: 300
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}     # e.g. eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/s3-sync
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+# Only schedule onto the node group labeled test-nodes=true
+nodeSelector:
+  test-nodes: "true"
+
+# Spread replicas: never place two pods of this release on the same node
+podAntiAffinity:
+  enabled: true
+
+tolerations: []
