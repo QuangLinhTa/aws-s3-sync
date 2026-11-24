@@ -16,7 +16,7 @@ The work is split into three parts, built in this order. Each part depends on th
 ├── docker/                 # Part 1: image + script
 │   ├── Dockerfile
 │   ├── nginx.conf
-│   └── scripts/sync.sh     # (or sync.py) core logic
+│   └── scripts/sync.py     # core logic
 ├── helm/s3-sync/           # Part 2: Helm chart
 │   ├── Chart.yaml
 │   ├── values.yaml
@@ -31,11 +31,11 @@ The work is split into three parts, built in this order. Each part depends on th
 
 ## Part 1: Docker image and automation script
 
-**Goal:** One Docker image containing Nginx, AWS CLI, and a Bash/Python script that runs the core logic.
+**Goal:** One Docker image containing Nginx, AWS CLI, and a Python script that runs the core logic.
 
 Requirements:
 - A **single** Docker image.
-- Must contain: **Nginx**, **AWS CLI**, and a **Bash or Python script**.
+- Must contain: **Nginx**, **AWS CLI**, and a **Python script**.
 - The script performs the core logic: **S3 sync and compression**.
 - Nginx serves the result (e.g. the compressed archive and/or a status page) over HTTP.
 
@@ -44,7 +44,7 @@ Guidelines:
 - Configure it through environment variables (bucket, prefix, region, sync interval), never hard-coded values.
 - Do not bake AWS credentials into the image. Use IAM roles (IRSA on EKS) or the default credential chain.
 - The entrypoint starts the sync (run once, then optionally loop) and runs Nginx in the foreground.
-- Use `set -euo pipefail` in Bash. Fail loudly and log to stdout/stderr.
+- Call the AWS CLI via `subprocess` with `check=True`. Fail loudly and log to stdout/stderr.
 - Keep the image small and run as non-root where practical.
 
 ## Part 2: Helm chart parameterization
